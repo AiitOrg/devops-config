@@ -1,0 +1,40 @@
+name: Reusable Deploy
+
+on:
+  workflow_call:
+    inputs:
+      app_dir:
+        required: true
+        type: string
+      ssh_host:
+        required: true
+        type: string
+      ssh_user:
+        required: true
+        type: string
+    secrets:
+      SSH_KEY:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ inputs.ssh_host }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ inputs.ssh_user }}@${{ inputs.ssh_host }} << 'EOF'
+            cd /home/${{ inputs.ssh_user }}/${{ inputs.app_dir }}
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+          EOF
