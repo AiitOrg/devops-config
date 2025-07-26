@@ -6,14 +6,12 @@ on:
       app_dir:
         required: true
         type: string
-      ssh_host:
-        required: true
-        type: string
-      ssh_user:
-        required: true
-        type: string
     secrets:
       SSH_KEY:
+        required: true
+      SSH_HOST:
+        required: true
+      SSH_USER:
         required: true
 
 jobs:
@@ -28,12 +26,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ inputs.ssh_host }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to EC2
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ inputs.ssh_user }}@${{ inputs.ssh_host }} << 'EOF'
-            cd /home/${{ inputs.ssh_user }}/${{ inputs.app_dir }}
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /home/${{ secrets.SSH_USER }}/${{ inputs.app_dir }}
             git pull origin main
             docker compose down
             docker compose up -d --build
