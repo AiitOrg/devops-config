@@ -33,6 +33,10 @@ jobs:
           ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd /home/${{ secrets.SSH_USER }}/${{ inputs.app_dir }}
             git pull origin dev
+            # .envが無い場合は.env.exampleからコピー
+            if [ ! -f .env ]; then
+              cp .env.example .env
+            fi
             docker compose down
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
           EOF
